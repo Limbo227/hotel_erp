@@ -165,3 +165,29 @@ class Payment(models.Model):
             raise ValidationError("Stay payment must be linked to a Stay.")
         if self.payment_type == 'service' and not self.service_usage:
             raise ValidationError("Service payment must be linked to a Service Usage.")
+
+
+class Kassa(models.Model):
+    name = models.CharField(max_length=50, default="Main Cash Register")
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.name} — Balance: {self.balance} ₸"
+
+
+class KassaTransaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('in', 'Cash In'),
+        ('out', 'Cash Out'),
+    ]
+
+    kassa = models.ForeignKey(Kassa, on_delete=models.CASCADE, related_name='transactions')
+    transaction_type = models.CharField(max_length=3, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True)
+    date = models.DateTimeField(default=timezone.now)
+
+    payment = models.ForeignKey('Payment', on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.transaction_type.upper()} {self.amount}₸ — {self.date.strftime('%Y-%m-%d')}"

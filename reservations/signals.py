@@ -1,6 +1,7 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
-from .models import ServiceUsage, Stay
+from django.db import transaction
+from .models import ServiceUsage, Stay, Kassa, KassaTransaction, Payment
 
 @receiver(post_save, sender=ServiceUsage)
 def update_stay_total(sender, instance, **kwargs):
@@ -40,3 +41,23 @@ def update_room_status_on_stay(sender, instance, **kwargs):
         room.status = 'available'
 
     room.save()
+
+
+@receiver(post_save, sender=Payment)
+def update_kassa_on_payment(sender, instance, created, **kwargs):
+    if created and instance.method == 'cash':
+        # Get or create main kassa
+        kassa, _ = Kassa.objects.get_or_create(name="Main Cash Register")
+
+        # Add money
+        kassa.balance += instance.amount
+        kassa.save()
+
+        # Log transaction
+        KassaTransaction.objects.create(
+            kassa=kassa,
+            transaction_type='in',
+            amount=instance.amount,
+            description=f"Payment ({instance.payment_type}) from guest via cash.",
+            payment=instance
+        )
