@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import RoomType, Room, Guest, Reservation, Stay, Service, ServiceUsage, Payment, Kassa, KassaTransaction
+from .models import RoomType, Room, Guest, Reservation, Stay, Service, ServiceUsage, Payment
 
 # Register simple models
 admin.site.register(RoomType)
@@ -32,12 +32,3 @@ class PaymentAdmin(admin.ModelAdmin):
     list_filter = ('payment_type', 'method')
     search_fields = ('stay__reservation__guest__name', 'service_usage__service__name')
 
-@admin.register(Kassa)
-class KassaAdmin(admin.ModelAdmin):
-    list_display = ('name', 'balance')
-
-@admin.register(KassaTransaction)
-class KassaTransactionAdmin(admin.ModelAdmin):
-    list_display = ('kassa', 'transaction_type', 'amount', 'date', 'description')
-    list_filter = ('transaction_type', 'date')
-    search_fields = ('description',)
